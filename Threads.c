@@ -148,6 +148,7 @@ static int readLine(char* buffer){
             len = -1;
         else
             len = -4;
+        fprintf(stderr, "Current line's length exceeded the max size of buffer. Skipping it.\n");
     }
 
     return len;
