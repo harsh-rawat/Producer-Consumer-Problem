@@ -50,14 +50,14 @@ void* StartReader(void* ptr){
             free(buffer);
             continue;
         } else if(len == -2){
-            signalEndOfExecutionByReader(buffer, reader, 1);
+            signalEndOfExecutionByReader(reader, buffer, 1);
             break;
         } else if(len == -3){
             copyLineToQueue(reader, buffer);
-            signalEndOfExecutionByReader(buffer, reader, 0);
+            signalEndOfExecutionByReader(reader, buffer, 0);
             break;
         } else if(len == -4){
-            signalEndOfExecutionByReader(buffer, reader, 1);
+            signalEndOfExecutionByReader(reader, buffer, 1);
             break;
         }
         copyLineToQueue(reader, buffer);
@@ -98,10 +98,10 @@ void* StartWriter(void* ptr){
     while(1){
         char* str = DequeueString(writer->inputQueue);
         if(str == NULL){
-            printf("Writer processed %d strings!\n",writer->stringsProcessedCount);
+            printf("Writer processed %d strings!\n\n",writer->stringsProcessedCount);
             break;
         }
-        printf("%s",str);
+        printf("%s\n",str);
         writer->stringsProcessedCount = writer->stringsProcessedCount + 1;
         free(str);
     }
@@ -131,15 +131,13 @@ static int readLine(char* buffer){
                 if(len == 0){
                     len = -2;
                 } else {
-                    buffer[len] = '\n';
                     len = -3;
                 }
                 break;
-            }
-            buffer[len++] = ch;
-            if(ch == '\n'){
+            } else if(ch == '\n'){
                 break;
             }
+            buffer[len++] = ch;
         }
     }
 
