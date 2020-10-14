@@ -1,6 +1,5 @@
 #include <pthread.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "Queue.h"
 #include "Threads.h"
@@ -28,7 +27,7 @@ int main(){
     thread_rets[2] = pthread_create(&munch2_thread, NULL, StartMunch2, (void*) munch2);
     thread_rets[3] = pthread_create(&writer_thread, NULL, StartWriter, (void*) writer);
 
-    int errorIndex = findErrorIndex(&thread_rets);
+    int errorIndex = findErrorIndex(thread_rets);
     if(errorIndex != -1){
         PrintErrorAndExit(errorIndex+1, thread_rets[errorIndex]);
     }
