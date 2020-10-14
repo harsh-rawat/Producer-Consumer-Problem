@@ -12,9 +12,9 @@
 #include "Error.h"
 
 // Static utility functions
-static int readLine(char* buffer);
+static void readLine(char* buffer, int* response);
 static void copyLine(char* buffer, char* str, int len);
-static void copyLineToQueue(Reader* reader, char* buffer);
+static void copyLineToQueue(Reader* reader, char* buffer, int len);
 static void signalEndOfExecutionByReader(Reader* reader, char* buffer, int freeBuffer);
 static void replaceSpaceWithAsterisk(char* str);
 static void convertLowerToUpperCase(char* str);
@@ -107,40 +107,29 @@ void* StartReader(void* ptr){
             return NULL;
         }
 
+        // Allocate memory for response of reading line
+        int* response = malloc(sizeof(int)*2);
         // Read the line from stdin
-        int retVal = readLine(buffer);
-        // A retVal of 1 means that the string was empty. Therefore, we need to pass an empty string into the queue i.e. '\0'
-        if(retVal == 1){
-            // Free the previous buffer as it is empty
-            free(buffer);
-            // Create a new string of size 1 (as it needs to store only '\0')
-            char* empty = calloc(1, sizeof(char));
-            if(empty == NULL) {
-                // If an error is encountered while calloc then print an error message and exit with failure code
-                PrintMallocErrorAndExit(THREADS_MODULE, READER, "calloc-reallocateString");
-                return NULL;
-            }
-            empty[0] = '\0';
-            // Enqueue the empty string in the queue
-            EnqueueString(reader->outputQueue, empty);
-            continue;
-        } else if(retVal == -1){ // retVal = -1 means buffer overflow, so skip this line
+        readLine(buffer, response);
+
+        if(response[0] == -1){ // response = -1 means buffer overflow, so skip this line
             free(buffer);
             continue;
-        } else if(retVal == -2){// retVal = -2 means EOF is received and there is no data in buffer. Signal end directly.
+        } else if(response[0] == -2){// response = -2 means EOF is received and there is no data in buffer. Signal end directly.
             signalEndOfExecutionByReader(reader, buffer, 1);
             break;
-        } else if(retVal == -3){// retVal = -3 means EOF is received and there is some data to be copied in buffer. Copy data then signal end.
-            copyLineToQueue(reader, buffer);
+        } else if(response[0] == -3){// response = -3 means EOF is received and there is some data to be copied in buffer. Copy data then signal end.
+            copyLineToQueue(reader, buffer, response[1]);
             signalEndOfExecutionByReader(reader, NULL, 0);
             break;
-        } else if(retVal == -4){// retVal = -4 means EOF is received after the current line overflow the buffer. So skip line and signal end.
+        } else if(response[0] == -4){// response = -4 means EOF is received after the current line overflow the buffer. So skip line and signal end.
             signalEndOfExecutionByReader(reader, buffer, 1);
             break;
         }
 
         // In case of normal execution, copy the contents to an appropriately sized string and enqueue it.
-        copyLineToQueue(reader, buffer);
+        copyLineToQueue(reader, buffer, response[1]);
+        free(response);
     }
 
     pthread_exit(NULL);
@@ -237,18 +226,28 @@ void* StartWriter(void* ptr){
 /**
  * @function readLine
  * @argument buffer - The buffer in which the data is stored
+ * @argument response - pointer to an integer array which will hold the response
  * @description
  * This method reads a line from stdin using fgetc. If the total length of string becomes equal to max buffer size, then we ignore that line.
  *
- * A return value of 1 means that the buffer is empty (Input line was a newline)
- * A return value of -1 means that the buffer was flushed due to length of line exceeding the max size
- * A return value of -2 means that EOF has been reached with empty buffer
- * A return value of -3 means that EOF has been reached with some value in buffer
- * A return value of -4 means that EOF was reached after line length exceeded Max length
- * A positive return value means normal execution with data in buffer which needs to be copied to queue
+ * The response is returned by this method using the response array taken as param.
+ * The first index corresponds to status and the second index corresponds to length of the string
  *
+ * For Status-
+ * A status value of -1 means that the buffer was flushed due to length of line exceeding the max size
+ * A status value of -2 means that EOF has been reached with empty buffer
+ * A status value of -3 means that EOF has been reached with some value in buffer
+ * A status value of -4 means that EOF was reached after line length exceeded Max length. Therefore skip the line.
+ * A status value of 0 means normal execution
+ *
+ * When buffer contains some value then we append '\0' at the end.
+ * Second index of response is set to length for status 0, -3.
+ *
+ * Explanation for newline case-
+ * response would be [0,0] which means normal execution and length of 0.
+ * In the copyLine method, a null string would be created which will be enqueued.
  * */
-static int readLine(char* buffer){
+static void readLine(char* buffer, int* response){
     int len = 0, eof = 0, retVal = 0;
     char ch;
     while(1){
@@ -263,19 +262,24 @@ static int readLine(char* buffer){
                 eof = 1;
                 break;
             }
-            else if(ch == '\n') { // In case len > MAX_BUFFER_SIZE wait for len to break the read loop
+            else if(ch == '\n') { // In case len >= MAX_BUFFER_SIZE -1 wait for len to break the read loop
                 break;
             }
         } else {
             // If the total len is less that max buffer size then execute this
             if(ch == EOF){ // If EOF is received then check the len to set the appropriate return value
                 if(len == 0){
-                    len = -2;
+                    response[0] = -2;
                 } else {
-                    len = -3;
+                    buffer[len] = '\0';
+                    response[0] = -3;
+                    response[1] = len;
                 }
                 break;
             } else if(ch == '\n'){ // If this is new line char then ignore it and break the read loop
+                buffer[len] = '\0';
+                response[0] = 0;
+                response[1] = len;
                 break;
             }
             // In case of normal character with len < MAX_BUFFER_SIZE, update the buffer
@@ -286,18 +290,17 @@ static int readLine(char* buffer){
     // In case the length is greater than max buffer size - 1, set the appropriate return value depending on eof flag
     // The reason for using MAX_BUFFER_SIZE - 1 is explained above
     if(len >= (MAX_BUFFER_SIZE - 1)){
-        if(eof == 0)
-            len = -1;
-        else
-            len = -4;
+        if(eof == 0) {
+            response[0] = -1;
+            response[1] = 0;
+        }
+        else {
+            response[0] = -4;
+            response[1] = 0;
+        }
         retVal = fprintf(stderr, "Current line's length exceeded the max size of buffer. Skipping it.\n");
         if(retVal < 0) PrintOutputPrintErrorAndExit(THREADS_MODULE, READER, "STDERR-Buffer-Exceeded");
-    } else {
-        buffer[len++] = '\0';
     }
-
-    // return the response code
-    return len;
 }
 
 /**
@@ -309,26 +312,29 @@ static int readLine(char* buffer){
  * This method copies the data from input buffer to output buffer
  * */
 static void copyLine(char* buffer, char* str, int len){
-    for(int i =0; i < len; i++){
+    int i = 0;
+    while(i < len){
         str[i] = buffer[i];
+        i = i + 1;
     }
+    // Last character of the line should be null
+    str[len] = '\0';
 }
 
 /**
  * @function copyLineToQueue
  * @argument reader - Reader struct
  * @argument buffer - Buffer in which data was being stored
+ * @argument len - length of the input string
  * @description
  * This method allocates a new string buffer which is equal to the length of the input string.
  * The contents of the buffer are copied in this new buffer which is then enqueued on Reader-Munch1 queue
  * */
-static void copyLineToQueue(Reader* reader, char* buffer){
+static void copyLineToQueue(Reader* reader, char* buffer, int len){
     if(buffer == NULL) return;
 
-    // Find the length of the original string
-    int len = strlen(buffer);
-    // Allocate a new buffer which is equal to the length of the string
-    char* str = calloc(len, sizeof(char));
+    // Allocate a new buffer which is equal to the length  of the string + 1. Extra 1 is for the null character at the end.
+    char* str = calloc(len+1, sizeof(char));
     if(str == NULL) {
         free(buffer);
         PrintMallocErrorAndExit(THREADS_MODULE, READER, "calloc-reallocateString");
