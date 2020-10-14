@@ -62,6 +62,8 @@ void* StartReader(void* ptr){
         }
         copyLineToQueue(reader, buffer);
     }
+
+    return NULL;
 }
 
 void* StartMunch1(void* ptr){
@@ -76,6 +78,8 @@ void* StartMunch1(void* ptr){
         replaceSpaceWithAsterisk(str);
         EnqueueString(munch1->outputQueue, str);
     }
+
+    return NULL;
 }
 
 void* StartMunch2(void* ptr){
@@ -90,6 +94,8 @@ void* StartMunch2(void* ptr){
         convertLowerToUpperCase(str);
         EnqueueString(munch2->outputQueue, str);
     }
+
+    return NULL;
 }
 
 void* StartWriter(void* ptr){
@@ -105,6 +111,8 @@ void* StartWriter(void* ptr){
         writer->stringsProcessedCount = writer->stringsProcessedCount + 1;
         free(str);
     }
+
+    return NULL;
 }
 
 /**
