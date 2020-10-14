@@ -1,3 +1,11 @@
+# Harsh Rawat (hrawat2)
+# Sidharth Gurbani (gurbani)
+#
+# This is the makefile for Assignment 2 of CS537 in Fall 2020 offering
+# Run "make all" to build the source code
+# The executable file is named prodcom
+#
+#
 PROGNAME = prodcom
 CC      = gcc
 CFLAGS = -Wall -pedantic -Wextra
@@ -5,7 +13,7 @@ LDFLAGS = -pthread
 OBJECTS = main.o Queue.o Threads.o statistics.o Error.o
 SCAN_BUILD_DIR = scan-build-out
 
-all: $(PROGNAME)
+all: clean $(PROGNAME)
 
 $(PROGNAME): $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGNAME) $(OBJECTS)
