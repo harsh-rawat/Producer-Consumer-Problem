@@ -20,8 +20,10 @@ Queue *CreateStringQueue(int size, char* queueIdentity) {
     // Allocate the space for Queue struct using malloc
     Queue *stringQueue = malloc(sizeof(Queue));
     // If malloc returns an error then print the error message and exit
-    if(stringQueue == NULL)
+    if(stringQueue == NULL) {
         PrintMallocErrorAndExit(QUEUE_MODULE, queueIdentity, "Queue Structure");
+        return NULL;
+    }
 
     // Set the name associated with the queue
     stringQueue->queueIdentity = queueIdentity;
@@ -34,8 +36,11 @@ Queue *CreateStringQueue(int size, char* queueIdentity) {
     // Allocate space for the string array
     stringQueue->queue = malloc(sizeof(char *) * size);
     // If malloc returns an error then print the corresponding error message and exit
-    if(stringQueue->queue == NULL)
+    if(stringQueue->queue == NULL) {
+        free(stringQueue);
         PrintMallocErrorAndExit(QUEUE_MODULE, queueIdentity, "Queue Array");
+        return NULL;
+    }
 
     int retVal;
     // Initialize lock semaphore with initial value of 1. In case of error print error message and exit.

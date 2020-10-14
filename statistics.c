@@ -20,6 +20,7 @@ Stats* CreateStatistics(char* statsIdentity){
     Stats* stats = malloc(sizeof(Stats));
     if(stats == NULL){
         PrintMallocErrorAndExit(STATS_MODULE, statsIdentity, "CreateStatistics");
+        return NULL;
     }
 
     // Set the name and initialize other counters with an initial value of 0.

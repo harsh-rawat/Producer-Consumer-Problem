@@ -27,7 +27,10 @@ static void convertLowerToUpperCase(char* str);
  * */
 Reader* CreateReader(Queue* outputQueue){
     Reader* reader = malloc(sizeof(Reader));
-    if(reader == NULL) PrintMallocErrorAndExit(THREADS_MODULE, READER, "CreateReader");
+    if(reader == NULL) {
+        PrintMallocErrorAndExit(THREADS_MODULE, READER, "CreateReader");
+        return NULL;
+    }
     reader->outputQueue = outputQueue;
     return reader;
 }
@@ -41,7 +44,10 @@ Reader* CreateReader(Queue* outputQueue){
  * */
 Munch1* CreateMunch1(Queue* inputQueue, Queue* outputQueue){
     Munch1* munch1 = malloc(sizeof(Munch1));
-    if(munch1 == NULL) PrintMallocErrorAndExit(THREADS_MODULE, MUNCH1, "CreateMunch1");
+    if(munch1 == NULL) {
+        PrintMallocErrorAndExit(THREADS_MODULE, MUNCH1, "CreateMunch1");
+        return NULL;
+    }
     munch1->inputQueue = inputQueue;
     munch1->outputQueue = outputQueue;
     return munch1;
@@ -56,7 +62,10 @@ Munch1* CreateMunch1(Queue* inputQueue, Queue* outputQueue){
  * */
 Munch2* CreateMunch2(Queue* inputQueue, Queue* outputQueue){
     Munch2* munch2 = malloc(sizeof(Munch2));
-    if(munch2 == NULL) PrintMallocErrorAndExit(THREADS_MODULE, MUNCH2, "CreateMunch2");
+    if(munch2 == NULL) {
+        PrintMallocErrorAndExit(THREADS_MODULE, MUNCH2, "CreateMunch2");
+        return NULL;
+    }
     munch2->inputQueue = inputQueue;
     munch2->outputQueue = outputQueue;
     return munch2;
@@ -70,7 +79,10 @@ Munch2* CreateMunch2(Queue* inputQueue, Queue* outputQueue){
  * */
 Writer* CreateWriter(Queue* inputQueue){
     Writer* writer = malloc(sizeof(Writer));
-    if(writer == NULL) PrintMallocErrorAndExit(THREADS_MODULE, WRITER, "CreateWriter");
+    if(writer == NULL) {
+        PrintMallocErrorAndExit(THREADS_MODULE, WRITER, "CreateWriter");
+        return NULL;
+    }
     writer->inputQueue = inputQueue;
     writer->stringsProcessedCount = 0;
     return writer;
@@ -90,7 +102,10 @@ void* StartReader(void* ptr){
         // Allocate buffer for each new line. This buffer will be freed and the string will be copied to a new proper sized buffer.
         char* buffer = malloc(sizeof(char) * MAX_BUFFER_SIZE);
         // In case of error, print error message and exit with failure code
-        if(buffer == NULL) PrintMallocErrorAndExit(THREADS_MODULE, READER, "Buffer");
+        if(buffer == NULL) {
+            PrintMallocErrorAndExit(THREADS_MODULE, READER, "Buffer");
+            return NULL;
+        }
 
         // Read the line from stdin
         int retVal = readLine(buffer);
@@ -102,7 +117,7 @@ void* StartReader(void* ptr){
             break;
         } else if(retVal == -3){// retVal = -3 means EOF is received and there is some data to be copied in buffer. Copy data then signal end.
             copyLineToQueue(reader, buffer);
-            signalEndOfExecutionByReader(reader, buffer, 0);
+            signalEndOfExecutionByReader(reader, NULL, 0);
             break;
         } else if(retVal == -4){// retVal = -4 means EOF is received after the current line overflow the buffer. So skip line and signal end.
             signalEndOfExecutionByReader(reader, buffer, 1);
@@ -292,7 +307,11 @@ static void copyLineToQueue(Reader* reader, char* buffer){
     int len = strlen(buffer);
     // Allocate a new buffer which is equal to the length of the string
     char* str = calloc(len, sizeof(char));
-    if(str == NULL) PrintMallocErrorAndExit(THREADS_MODULE, READER, "calloc-reallocateString");
+    if(str == NULL) {
+        free(buffer);
+        PrintMallocErrorAndExit(THREADS_MODULE, READER, "calloc-reallocateString");
+        return;
+    }
 
     // Copy the contents of original buffer into new buffer
     copyLine(buffer, str, len);
