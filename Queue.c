@@ -1,6 +1,6 @@
-#include "Queue.h"
 #include <stdlib.h>
 #include <time.h>
+#include "Queue.h"
 
 Queue *CreateStringQueue(int size, char* queueIdentity) {
 

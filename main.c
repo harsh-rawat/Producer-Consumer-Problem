@@ -3,12 +3,14 @@
 #include "Queue.h"
 #include "Threads.h"
 
+#define MAX_QUEUE_SIZE 10
+
 int main(){
     pthread_t reader_thread, munch1_thread, munch2_thread, writer_thread;
 
-    Queue* reader_munch1_queue = CreateStringQueue(10, "Reader-Munch1");
-    Queue* munch1_munch2_queue = CreateStringQueue(10, "Munch1-Munch2");
-    Queue* munch2_writer_queue = CreateStringQueue(10, "Munch2-Writer");
+    Queue* reader_munch1_queue = CreateStringQueue(MAX_QUEUE_SIZE, "Reader-Munch1");
+    Queue* munch1_munch2_queue = CreateStringQueue(MAX_QUEUE_SIZE, "Munch1-Munch2");
+    Queue* munch2_writer_queue = CreateStringQueue(MAX_QUEUE_SIZE, "Munch2-Writer");
 
     Reader* reader = CreateReader(reader_munch1_queue);
     Munch1* munch1 = CreateMunch1(reader_munch1_queue, munch1_munch2_queue);
