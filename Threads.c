@@ -253,16 +253,17 @@ static void readLine(char* buffer, int* response){
     while(1){
         // Read a character from stdin
         ch = fgetc(stdin);
+
         // If the total length until now exceeds MAX_BUFFER_SIZE -1 then do not update the buffer. Wait for EOF or newline.
-        // We use MAX_BUFFER_SIZE -1 because last character needs to be null
-        // Consider that MAX_BUFFER_SIZE is 10. Then when len == 8 then 9 characters would have been placed in buffer and last one needs to be '\0'
-        if(len >= (MAX_BUFFER_SIZE - 1)){
+        // Consider that MAX_BUFFER_SIZE is 10. Then when len == 10 then 10 characters would have been placed in buffer and there won't be space for last '\0'
+        // Hence this would be an overflow
+        if(len >= MAX_BUFFER_SIZE){
             // In case of EOF being received, we will use eof variable as a flag
             if(ch == EOF) {
                 eof = 1;
                 break;
             }
-            else if(ch == '\n') { // In case len >= MAX_BUFFER_SIZE -1 wait for len to break the read loop
+            else if(ch == '\n') { // In case len >= MAX_BUFFER_SIZE wait for len to break the read loop
                 break;
             }
         } else {
@@ -287,9 +288,8 @@ static void readLine(char* buffer, int* response){
         }
     }
 
-    // In case the length is greater than max buffer size - 1, set the appropriate return value depending on eof flag
-    // The reason for using MAX_BUFFER_SIZE - 1 is explained above
-    if(len >= (MAX_BUFFER_SIZE - 1)){
+    // In case of buffer overflow, set the appropriate return value depending on eof flag
+    if(len >= MAX_BUFFER_SIZE){
         if(eof == 0) {
             response[0] = -1;
             response[1] = 0;
