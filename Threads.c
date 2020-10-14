@@ -108,6 +108,7 @@ void* StartReader(void* ptr){
             signalEndOfExecutionByReader(reader, buffer, 1);
             break;
         }
+
         // In case of normal execution, copy the contents to an appropriately sized string and enqueue it.
         copyLineToQueue(reader, buffer);
     }
@@ -285,6 +286,8 @@ static void copyLine(char* buffer, char* str, int len){
  * The contents of the buffer are copied in this new buffer which is then enqueued on Reader-Munch1 queue
  * */
 static void copyLineToQueue(Reader* reader, char* buffer){
+    if(buffer == NULL) return;
+
     // Find the length of the original string
     int len = strlen(buffer);
     // Allocate a new buffer which is equal to the length of the string
