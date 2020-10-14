@@ -109,7 +109,22 @@ void* StartReader(void* ptr){
 
         // Read the line from stdin
         int retVal = readLine(buffer);
-        if(retVal == -1){ // retVal = -1 means buffer overflow, so skip this line
+        // A retVal of 1 means that the string was empty. Therefore, we need to pass an empty string into the queue i.e. '\0'
+        if(retVal == 1){
+            // Free the previous buffer as it is empty
+            free(buffer);
+            // Create a new string of size 1 (as it needs to store only '\0')
+            char* empty = calloc(1, sizeof(char));
+            if(empty == NULL) {
+                // If an error is encountered while calloc then print an error message and exit with failure code
+                PrintMallocErrorAndExit(THREADS_MODULE, READER, "calloc-reallocateString");
+                return NULL;
+            }
+            empty[0] = '\0';
+            // Enqueue the empty string in the queue
+            EnqueueString(reader->outputQueue, empty);
+            continue;
+        } else if(retVal == -1){ // retVal = -1 means buffer overflow, so skip this line
             free(buffer);
             continue;
         } else if(retVal == -2){// retVal = -2 means EOF is received and there is no data in buffer. Signal end directly.
@@ -225,11 +240,13 @@ void* StartWriter(void* ptr){
  * @description
  * This method reads a line from stdin using fgetc. If the total length of string becomes equal to max buffer size, then we ignore that line.
  *
+ * A return value of 1 means that the buffer is empty (Input line was a newline)
  * A return value of -1 means that the buffer was flushed due to length of line exceeding the max size
  * A return value of -2 means that EOF has been reached with empty buffer
  * A return value of -3 means that EOF has been reached with some value in buffer
  * A return value of -4 means that EOF was reached after line length exceeded Max length
  * A positive return value means normal execution with data in buffer which needs to be copied to queue
+ *
  * */
 static int readLine(char* buffer){
     int len = 0, eof = 0, retVal = 0;
@@ -237,8 +254,10 @@ static int readLine(char* buffer){
     while(1){
         // Read a character from stdin
         ch = fgetc(stdin);
-        // If the total length until now exceeds MAX_BUFFER_SIZE then do not update the buffer. Wait for EOF or newline.
-        if(len > MAX_BUFFER_SIZE){
+        // If the total length until now exceeds MAX_BUFFER_SIZE -1 then do not update the buffer. Wait for EOF or newline.
+        // We use MAX_BUFFER_SIZE -1 because last character needs to be null
+        // Consider that MAX_BUFFER_SIZE is 10. Then when len == 8 then 9 characters would have been placed in buffer and last one needs to be '\0'
+        if(len >= (MAX_BUFFER_SIZE - 1)){
             // In case of EOF being received, we will use eof variable as a flag
             if(ch == EOF) {
                 eof = 1;
@@ -264,14 +283,17 @@ static int readLine(char* buffer){
         }
     }
 
-    // In case the length is greater than max buffer size, set the appropriate return value depending on eof flag
-    if(len > MAX_BUFFER_SIZE){
+    // In case the length is greater than max buffer size - 1, set the appropriate return value depending on eof flag
+    // The reason for using MAX_BUFFER_SIZE - 1 is explained above
+    if(len >= (MAX_BUFFER_SIZE - 1)){
         if(eof == 0)
             len = -1;
         else
             len = -4;
         retVal = fprintf(stderr, "Current line's length exceeded the max size of buffer. Skipping it.\n");
         if(retVal < 0) PrintOutputPrintErrorAndExit(THREADS_MODULE, READER, "STDERR-Buffer-Exceeded");
+    } else {
+        buffer[len++] = '\0';
     }
 
     // return the response code
