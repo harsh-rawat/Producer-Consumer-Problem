@@ -1,6 +1,6 @@
 /**
- * @author Harsh Rawat (hrawat2)
- * @author Sidharth Gurbani (gurbani)
+ * @author Harsh Rawat, harsh-rawat, hrawat2
+ * @author Sidharth Gurbani, gurbani, gurbani
  * */
 
 #include <stdio.h>

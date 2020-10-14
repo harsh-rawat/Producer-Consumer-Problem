@@ -1,4 +1,4 @@
-This is original work of Harsh Rawat (hrawat2) and Sidharth Gurbani (gurbani) for Assignment 2 (CS 537 Fall 2020).
+This is original work of Harsh Rawat (CSLogin: harsh-rawat and netid: hrawat2) and Sidharth Gurbani (CSLogin: gurbani and netid: gurbani) for Assignment 2 (CS 537 Fall 2020).
 
 Problem Description-
 -------------------

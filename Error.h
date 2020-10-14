@@ -1,6 +1,6 @@
 /**
- * @author Harsh Rawat (hrawat2)
- * @author Sidharth Gurbani (gurbani)
+ * @author Harsh Rawat, harsh-rawat, hrawat2
+ * @author Sidharth Gurbani, gurbani, gurbani
  *
  * @description
  * This module is used to collect all the error handling functionality at a single place.
