@@ -4,6 +4,8 @@
 #include <semaphore.h>
 #include "statistics.h"
 
+#define QUEUE_MODULE "Queue"
+
 typedef struct {
     char* queueIdentity;
 

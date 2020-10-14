@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <pthread.h>
 #include "Threads.h"
+#include "Error.h"
 
 static int readLine(char* buffer);
 static void copyLine(char* buffer, char* str, int len);
@@ -14,12 +16,14 @@ static void convertLowerToUpperCase(char* str);
 
 Reader* CreateReader(Queue* outputQueue){
     Reader* reader = malloc(sizeof(Reader));
+    if(reader == NULL) PrintMallocErrorAndExit(THREADS_MODULE, READER, "CreateReader");
     reader->outputQueue = outputQueue;
     return reader;
 }
 
 Munch1* CreateMunch1(Queue* inputQueue, Queue* outputQueue){
     Munch1* munch1 = malloc(sizeof(Munch1));
+    if(munch1 == NULL) PrintMallocErrorAndExit(THREADS_MODULE, MUNCH1, "CreateMunch1");
     munch1->inputQueue = inputQueue;
     munch1->outputQueue = outputQueue;
     return munch1;
@@ -27,6 +31,7 @@ Munch1* CreateMunch1(Queue* inputQueue, Queue* outputQueue){
 
 Munch2* CreateMunch2(Queue* inputQueue, Queue* outputQueue){
     Munch2* munch2 = malloc(sizeof(Munch2));
+    if(munch2 == NULL) PrintMallocErrorAndExit(THREADS_MODULE, MUNCH2, "CreateMunch2");
     munch2->inputQueue = inputQueue;
     munch2->outputQueue = outputQueue;
     return munch2;
@@ -34,6 +39,7 @@ Munch2* CreateMunch2(Queue* inputQueue, Queue* outputQueue){
 
 Writer* CreateWriter(Queue* inputQueue){
     Writer* writer = malloc(sizeof(Writer));
+    if(writer == NULL) PrintMallocErrorAndExit(THREADS_MODULE, WRITER, "CreateWriter");
     writer->inputQueue = inputQueue;
     writer->stringsProcessedCount = 0;
     return writer;
@@ -44,6 +50,7 @@ void* StartReader(void* ptr){
 
     while(1){
         char* buffer = malloc(sizeof(char) * MAX_BUFFER_SIZE);
+        if(buffer == NULL) PrintMallocErrorAndExit(THREADS_MODULE, READER, "Buffer");
         int len = readLine(buffer);
 
         if(len == -1){
@@ -63,7 +70,7 @@ void* StartReader(void* ptr){
         copyLineToQueue(reader, buffer);
     }
 
-    return NULL;
+    pthread_exit(NULL);
 }
 
 void* StartMunch1(void* ptr){
@@ -79,7 +86,7 @@ void* StartMunch1(void* ptr){
         EnqueueString(munch1->outputQueue, str);
     }
 
-    return NULL;
+    pthread_exit(NULL);
 }
 
 void* StartMunch2(void* ptr){
@@ -95,24 +102,28 @@ void* StartMunch2(void* ptr){
         EnqueueString(munch2->outputQueue, str);
     }
 
-    return NULL;
+    pthread_exit(NULL);
 }
 
 void* StartWriter(void* ptr){
     Writer* writer = (Writer*) ptr;
 
+    int retVal;
     while(1){
         char* str = DequeueString(writer->inputQueue);
         if(str == NULL){
-            printf("Writer processed %d strings!\n\n",writer->stringsProcessedCount);
+            retVal = printf("Writer processed %d strings!\n\n",writer->stringsProcessedCount);
+            if(retVal < 0) PrintOutputPrintErrorAndExit(THREADS_MODULE, WRITER, "Processed Count");
+
             break;
         }
-        printf("%s\n",str);
+        retVal = printf("%s\n",str);
+        if(retVal < 0) PrintOutputPrintErrorAndExit(THREADS_MODULE, WRITER, "Processed-String");
         writer->stringsProcessedCount = writer->stringsProcessedCount + 1;
         free(str);
     }
 
-    return NULL;
+    pthread_exit(NULL);
 }
 
 /**
@@ -122,7 +133,7 @@ void* StartWriter(void* ptr){
  * A return value of -4 means that EOF was reached after line length exceeded Max length
  * */
 static int readLine(char* buffer){
-    int len = 0, eof = 0;
+    int len = 0, eof = 0, retVal = 0;
     char ch;
     while(1){
         ch = fgetc(stdin);
@@ -154,7 +165,8 @@ static int readLine(char* buffer){
             len = -1;
         else
             len = -4;
-        fprintf(stderr, "Current line's length exceeded the max size of buffer. Skipping it.\n");
+        retVal = fprintf(stderr, "Current line's length exceeded the max size of buffer. Skipping it.\n");
+        if(retVal < 0) PrintOutputPrintErrorAndExit(THREADS_MODULE, READER, "STDERR-Buffer-Exceeded");
     }
 
     return len;
@@ -169,6 +181,7 @@ static void copyLine(char* buffer, char* str, int len){
 static void copyLineToQueue(Reader* reader, char* buffer){
     int len = strlen(buffer);
     char* str = calloc(len, sizeof(char));
+    if(str == NULL) PrintMallocErrorAndExit(THREADS_MODULE, READER, "calloc-reallocateString");
     copyLine(buffer, str, len);
     free(buffer);
     EnqueueString(reader->outputQueue, str);

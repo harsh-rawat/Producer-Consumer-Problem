@@ -4,6 +4,12 @@
 
 #include "Queue.h"
 
+#define THREADS_MODULE "Threads"
+#define READER "Reader"
+#define MUNCH1 "Munch1"
+#define MUNCH2 "Munch2"
+#define WRITER "Writer"
+
 typedef struct{
     Queue* outputQueue;
 } Reader;

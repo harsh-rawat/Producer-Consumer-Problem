@@ -3,7 +3,11 @@
 
 #include <semaphore.h>
 
+#define STATS_MODULE "Statistics"
+
 typedef struct {
+    char* statsIdentity;
+
     int enqueueCount;
     int dequeueCount;
     double enqueueTime;
@@ -12,11 +16,11 @@ typedef struct {
     sem_t lock;
 } Stats;
 
-Stats* CreateStatistics();
+Stats* CreateStatistics(char* statsIdentity);
 void UpdateEnqueueCount(Stats* stats, int count);
 void UpdateDequeueCount(Stats* stats, int count);
 void UpdateEnqueueTime(Stats* stats, clock_t startTime, clock_t endTime);
 void UpdateDequeueTime(Stats* stats, clock_t startTime, clock_t endTime);
-void PrintStatistics(Stats* stats, char* statsIdentity);
+void PrintStatistics(Stats* stats);
 
 #endif
