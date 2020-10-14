@@ -31,7 +31,7 @@
 
 #define ASSIGNMENT2_THREADS_H
 // Define maximum buffer size to be used for any string
-#define MAX_BUFFER_SIZE 50960
+#define MAX_BUFFER_SIZE 4096
 // Define constants for various strings
 #define THREADS_MODULE "Threads"
 #define READER "Reader"
