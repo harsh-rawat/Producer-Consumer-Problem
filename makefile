@@ -7,7 +7,7 @@ OBJECTS = main.o Queue.o Threads.o statistics.o
 all: $(PROGNAME)
 
 $(PROGNAME): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(PROGNAME) $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGNAME) $(OBJECTS)
 
 main.o: main.c Queue.h Threads.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -c main.c
